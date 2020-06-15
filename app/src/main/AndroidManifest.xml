@@ -31,6 +31,17 @@
                 android:name="android.service.wallpaper"
                 android:resource="@xml/pager" />
         </service>
+
+        <service
+                android:name=".GravityWallService"
+                android:permission="android.permission.BIND_WALLPAPER">
+            <intent-filter>
+                <action android:name="android.service.wallpaper.WallpaperService" />
+            </intent-filter>
+            <meta-data
+                    android:name="android.service.wallpaper"
+                    android:resource="@xml/pager" />
+        </service>
     </application>
 
 </manifest>

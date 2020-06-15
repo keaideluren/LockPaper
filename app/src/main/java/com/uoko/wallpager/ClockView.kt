@@ -336,7 +336,10 @@ class ClockView : View {
             //表格模式Y位置
             val tableY = tableY(i) + tableTopHalf
             //转盘模式旋转角度
-            val panRotate = 30F * i - 30F * currentMonth
+            var panRotate = 30F * i - 30F * currentMonth
+            if (currentDate == dayOfMonth && currentHour == 23 && currentMinute == 59 && currentSecont == 59) {
+                panRotate -= 30F * extraRotation
+            }
             //文字X偏移，相对
             val textX = halfMaxSize - hmsTextWidth * 4 - weekWidth - monthWidth
             //表盘模式文字Xcanvas中位置,textX应该用sqrt(textx^2,textY^2)
@@ -371,7 +374,10 @@ class ClockView : View {
                     tableTopHalf + //固定100
                     2 * textSize * 1.5F + textSize//月份两行+固定一行间距
             //转盘模式旋转角度
-            val panRotate = (360F / dayOfMonth) * (i - currentDate)
+            var panRotate = (360F / dayOfMonth) * (i - currentDate)
+            if (currentHour == 23 && currentMinute == 59 && currentSecont == 59) {
+                panRotate -= 360F / dayOfMonth * extraRotation
+            }
             //文字X偏移，相对
             val textX = halfMaxSize - hmsTextWidth * 4 - weekWidth
             //表盘模式文字Xcanvas中位置,textX应该用sqrt(textx^2,textY^2)
@@ -407,9 +413,12 @@ class ClockView : View {
                     2 * textSize * 1.5F + textSize +//月份两行+固定一行间距
                     6 * textSize * 1.5F + textSize
             //转盘模式旋转角度
-            val panRotate = (360F / 7) * (i - currentDay)
+            var panRotate = (360F / 7) * (i - currentDay)
+            if (currentHour == 23 && currentMinute == 59 && currentSecont == 59) {
+                panRotate -= 360F / 7 * extraRotation
+            }
             //文字X偏移，相对
-            val textX = halfMaxSize - hmsTextWidth * 4
+            val textX = halfMaxSize - hmsTextWidth * 3 - weekWidth
             //表盘模式文字Xcanvas中位置,textX应该用sqrt(textx^2,textY^2)
             val panX = panX(halfMaxSize, textX, widthUseable, panRotate)
             //表盘模式Ycanvas中位置
@@ -436,15 +445,18 @@ class ClockView : View {
         canvas.save()
         for (i in 0..23) {
             //表格模式X位置
-            val tableX = tableX(i - 1, maxSize)
+            val tableX = tableX(i, maxSize)
             //表格模式Y位置
-            val tableY = tableY(i - 1) +
+            val tableY = tableY(i) +
                     tableTopHalf + //固定100
                     2 * textSize * 1.5F + textSize +//月份两行+固定一行间距
                     6 * textSize * 1.5F + textSize +//日
                     2 * textSize * 1.5F + textSize//星期
             //转盘模式旋转角度
-            val panRotate = 15F * (i - currentHour)
+            var panRotate = 15F * (i - currentHour)
+            if (currentMinute == 59 && currentSecont == 59) {
+                panRotate -= 15F * extraRotation
+            }
             //文字X偏移，相对
             val textX = halfMaxSize - hmsTextWidth * 3
             //表盘模式文字Xcanvas中位置,textX应该用sqrt(textx^2,textY^2)
@@ -472,16 +484,19 @@ class ClockView : View {
         canvas.save()
         for (i in 0..59) {
             //表格模式X位置
-            val tableX = tableX(i - 1, maxSize)
+            val tableX = tableX(i, maxSize)
             //表格模式Y位置
-            val tableY = tableY(i - 1) +
+            val tableY = tableY(i) +
                     tableTopHalf + //固定100
                     2 * textSize * 1.5F + textSize +//月份两行+固定一行间距
                     6 * textSize * 1.5F + textSize +//日
                     2 * textSize * 1.5F + textSize +//星期
                     4 * textSize * 1.5F + textSize//时
             //转盘模式旋转角度
-            val panRotate = 6F * (i - currentMinute)
+            var panRotate = 6F * (i - currentMinute)
+            if (currentSecont == 59) {
+                panRotate -= 6F * extraRotation
+            }
             //文字X偏移，相对
             val textX = halfMaxSize - hmsTextWidth * 2
             //表盘模式文字Xcanvas中位置,textX应该用sqrt(textx^2,textY^2)
@@ -509,9 +524,9 @@ class ClockView : View {
         canvas.save()
         for (i in 0..59) {
             //表格模式X位置
-            val tableX = tableX(i - 1, maxSize)
+            val tableX = tableX(i, maxSize)
             //表格模式Y位置
-            val tableY = tableY(i - 1) +
+            val tableY = tableY(i) +
                     tableTopHalf + //固定100
                     2 * textSize * 1.5F + textSize +//月份两行+固定一行间距
                     6 * textSize * 1.5F + textSize +//日
@@ -519,7 +534,7 @@ class ClockView : View {
                     4 * textSize * 1.5F + textSize +//时
                     10 * textSize * 1.5F + textSize//分
             //转盘模式旋转角度
-            val panRotate = 6F * (i - currentSecont)
+            val panRotate = 6F * (i - currentSecont) - 6F * extraRotation
             //文字X偏移，相对
             val textX = halfMaxSize - hmsTextWidth
             //表盘模式文字Xcanvas中位置,textX应该用sqrt(textx^2,textY^2)
@@ -551,6 +566,7 @@ class ClockView : View {
         widthUseable: Float,
         panRotate: Float
     ): Float {
+        //textY heightUseable/2 - halfTextSize
         //表盘模式文字Xcanvas中位置,textX应该用sqrt(textx^2,textY^2)
         return Math.cos(panRotate / 180 * Math.PI).toFloat() * textX + widthUseable / 2
     }
@@ -562,6 +578,7 @@ class ClockView : View {
     private fun currentX(panX: Float, tableX: Float): Float {
         return panX * (1F - changeProgress) + tableX * changeProgress
     }
+
 
     private fun currentY(panY: Float, tableY: Float): Float {
         return panY * (1F - changeProgress) + tableY * changeProgress
