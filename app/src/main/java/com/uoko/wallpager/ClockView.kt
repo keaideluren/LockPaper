@@ -5,11 +5,17 @@ import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.hardware.Sensor
+import android.hardware.SensorEvent
+import android.hardware.SensorEventListener
+import android.hardware.SensorManager
 import android.os.Handler
 import android.util.AttributeSet
 import android.view.View
 import androidx.core.animation.addListener
+import androidx.core.content.ContextCompat.getSystemService
 import java.util.*
+import kotlin.concurrent.timerTask
 
 /**
  * Created by 拇指 on 2019/9/16 0016.
@@ -39,28 +45,37 @@ class ClockView : View {
 
     //时间tick时的动画
     private var scrollAnim: ValueAnimator
+
     //切换模式动画
     private var changeModeAnim: ValueAnimator
+
     //时间跳前的动画，额外多旋转一个角度
     private var extraRotation = 0F
+
     //切换动画进度
     private var changeProgress = 0F
+
     //时间tick一秒一次
     private var ticketTimerTask: TimerTask? = null
+
     //20秒一次，切换模式
     private var changeModeTask: TimerTask? = null
+
     //时间循环,这些都是懒得引入协程的东东
     private var timer: Timer? = null
+
     //模式 0圆盘  1的切换中动画  2表格
-    private var mode = 0
+    private var mode = 2
 
     private var currentHour = 0
     private var currentMinute = 0
     private var currentSecont = 0
     private var currentMonth = 0
     private var currentDay = 0
+
     //几号
     private var currentDate = 0
+
     //一个月有多少天
     private var dayOfMonth = 0
 
@@ -75,6 +90,7 @@ class ClockView : View {
             field = value
             paintCurrent.color = value
         }
+
     //颜色
     var normalColor: Int = Color.argb(0x66, 255, 255, 255)
         set(value) {
@@ -85,7 +101,34 @@ class ClockView : View {
     //绘制回调
     var drawCallback: (() -> Unit)? = null
 
-    private var newHandler: Handler = Handler(Handler.Callback { true })
+    private var newHandler: Handler = Handler { true }
+
+    private var sensorEventListener: SensorEventListener = object : SensorEventListener {
+        var isChangeing = false
+
+        override fun onSensorChanged(event: SensorEvent) {
+            if (!isChangeing) {
+                val x = event.values[0]
+                val y = event.values[1]
+                val z = event.values[2]
+                val accelerometer = Math.sqrt((x * x + y * y + z * z).toDouble())
+                if (accelerometer > 15 || accelerometer < 5) {
+                    //大概半个重力加速度，算是
+                    isChangeing = true
+                    Timer().schedule(timerTask {
+                        //3秒后
+                        isChangeing = false
+                    }, 1000)
+
+                    changeMode()
+                }
+            }
+        }
+
+        override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
+        }
+    }
+    private var sensorManager: SensorManager
 
     init {
         setBackgroundColor(Color.BLACK)
@@ -108,6 +151,8 @@ class ClockView : View {
 
         changeModeAnim = ValueAnimator.ofFloat(0F, 1F)
         changeModeAnim.duration = 800
+
+        sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
@@ -124,6 +169,18 @@ class ClockView : View {
         currentDay = calendar.get(Calendar.DAY_OF_WEEK)
         currentDate = calendar.get(Calendar.DATE)
         dayOfMonth = calendar.getActualMaximum(Calendar.DAY_OF_MONTH)
+    }
+
+    fun registerSensor() {
+        sensorManager.registerListener(
+            sensorEventListener,
+            sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER),
+            SensorManager.SENSOR_DELAY_NORMAL
+        )
+    }
+
+    fun unregisterSensor() {
+        sensorManager.unregisterListener(sensorEventListener)
     }
 
     /**
@@ -572,7 +629,8 @@ class ClockView : View {
     }
 
     private fun panY(panRotate: Float, textX: Float, heightUseable: Float): Float {
-        return Math.sin(panRotate / 180 * Math.PI).toFloat() * textX + heightUseable / 2 + halfTextSize
+        return Math.sin(panRotate / 180 * Math.PI)
+            .toFloat() * textX + heightUseable / 2 + halfTextSize
     }
 
     private fun currentX(panX: Float, tableX: Float): Float {
@@ -800,20 +858,35 @@ class ClockView : View {
         }
         changeModeTask = object : TimerTask() {
             override fun run() {
-                newHandler.post {
-                    if (mode == 0) {
-                        changeModeAnim.start()
-                    } else {
-                        changeModeAnim.reverse()
-                    }
-                }
+                changeMode()
             }
         }
         //一秒一次，走时的
         timer!!.schedule(ticketTimerTask, 1000, 1000)
         //20秒一次，切换模式
-        timer!!.schedule(changeModeTask, 10 * 1000, 10 * 1000)
+//        timer!!.schedule(changeModeTask, 10 * 1000, 20*1000)
 
+    }
+
+    fun changeMode() {
+        newHandler.post {
+            if (mode == 0) {
+                changeModeAnim.start()
+            } else {
+                changeModeAnim.reverse()
+            }
+        }
+    }
+
+    fun changeModeDelay(delay: Long) {
+        newHandler.removeCallbacksAndMessages(null)
+        newHandler.postDelayed({
+            if (mode == 0) {
+                changeModeAnim.start()
+            } else {
+                changeModeAnim.reverse()
+            }
+        }, delay)
     }
 
     fun destroy() {

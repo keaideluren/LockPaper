@@ -3,6 +3,7 @@ package com.uoko.wallpager
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.graphics.PorterDuff
 import android.service.wallpaper.WallpaperService
 
 /**
@@ -53,7 +54,7 @@ class GravityWallService : WallpaperService() {
 
         private fun drawCanvas(canvas: Canvas) {
             canvas.save()
-            canvas.drawColor(Color.BLACK)
+            canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR)
             viewClockView.draw(canvas)
             canvas.restore()
             surfaceHolder.unlockCanvasAndPost(canvas)

@@ -91,7 +91,7 @@ class GravityView : View {
         rectPaint = Paint()
         rectPaint.style = Paint.Style.STROKE
         rectPaint.color = Color.RED
-        rectPaint.strokeWidth = 2F
+        rectPaint.strokeWidth = 1F
     }
 
     fun initWidthHeight(width:Int, height:Int){
@@ -99,7 +99,7 @@ class GravityView : View {
         sHeight = height
     }
 
-    var squarSize = 400F//1000个像素大小,短轴方向
+    var squarSize = 541F//1000个像素大小,短轴方向
     var zSpaceDistance = 500F//每个框之间的距离
     var zSapceExtra = 1500F//观察者距第一个框的距离
     var count = 20
@@ -128,13 +128,14 @@ class GravityView : View {
 //        val tranY = 0
         for (i in 0..count) {
             val squarSizeAct = numerator / (i * zSpaceDistance + zSapceExtra)
-            canvas.drawRect(
-                -squarSize * squarSizeAct - tranX * (1-squarSizeAct) * squarSize,
-                -longAxisSize * squarSizeAct + tranY * (1-squarSizeAct) * longAxisSize,
-                squarSize * squarSizeAct - tranX * (1-squarSizeAct) * squarSize,
-                longAxisSize * squarSizeAct + tranY * (1-squarSizeAct) * longAxisSize,
-                rectPaint
-            )
+            canvas.drawCircle(-tranX * (1-squarSizeAct) * squarSize,tranY * (1-squarSizeAct) * longAxisSize, squarSize * squarSizeAct, rectPaint)
+//            canvas.drawRect(
+//                -squarSize * squarSizeAct - tranX * (1-squarSizeAct) * squarSize,
+//                -longAxisSize * squarSizeAct + tranY * (1-squarSizeAct) * longAxisSize,
+//                squarSize * squarSizeAct - tranX * (1-squarSizeAct) * squarSize,
+//                longAxisSize * squarSizeAct + tranY * (1-squarSizeAct) * longAxisSize,
+//                rectPaint
+//            )
         }
     }
 }

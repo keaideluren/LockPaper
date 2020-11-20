@@ -1,8 +1,14 @@
 package com.uoko.wallpager
 
+import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.PorterDuff
+import android.hardware.*
 import android.service.wallpaper.WallpaperService
+import java.util.*
+import kotlin.concurrent.timer
+import kotlin.concurrent.timerTask
 
 /**
  * Created by 拇指 on 2019/9/18 0018.
@@ -36,6 +42,7 @@ class DYWallService : WallpaperService() {
                     drawCanvas(it)
                 }
             }
+
         }
 
         override fun onVisibilityChanged(visible: Boolean) {
@@ -45,14 +52,16 @@ class DYWallService : WallpaperService() {
                 surfaceHolder.lockCanvas()?.let {
                     drawCanvas(it)
                 }
+                viewClockView.registerSensor()
             } else {
                 viewClockView.destroy()
+                viewClockView.unregisterSensor()
             }
         }
 
         private fun drawCanvas(canvas: Canvas) {
             canvas.save()
-            canvas.drawColor(Color.BLACK)
+            canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
             viewClockView.draw(canvas)
             canvas.restore()
             surfaceHolder.unlockCanvasAndPost(canvas)
